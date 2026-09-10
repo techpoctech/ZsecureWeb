@@ -1,17 +1,11 @@
 # ZsecureWeb
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU Affero General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
+ZsecureWeb is available under two distinct licenses:
 
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-GNU Affero General Public License for more details.
+1. **Open Source (AGPLv3):** Free for community, personal, and open-source use under the terms of the GNU Affero General Public License v3.0. Any network-hosted modifications or derivative works must be made publicly available under AGPLv3.
+2. **Commercial License:** For enterprises seeking to embed, modify, or deploy ZsecureWeb without the copyleft obligations of AGPLv3. Commercial licenses include enterprise SLAs, dedicated support, and custom deployment options.
 
-You should have received a copy of the GNU Affero General Public License
-along with this program. If not, see [https://www.gnu.org/licenses/](https://www.gnu.org/licenses/).
+To inquire about commercial licensing, contact: golengeeks@gmail.com
 
 The Open-Source, Hybrid-Local SASE & Enterprise Browser Enclave Platform
 
