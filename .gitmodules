@@ -1,6 +1,7 @@
 [submodule "thirdParty/chromium/src"]
 	path = thirdParty/chromium/src
 	url = https://github.com/techpoctech/chromium.git
+	ignore = untracked
 
 [submodule "thirdParty/chromium/src/zsecureweb"]
 	path = thirdParty/chromium/src/zsecureweb
