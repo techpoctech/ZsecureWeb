@@ -13,3 +13,19 @@ ZsecureWeb is a disruptive, unified SASE and Security Service Edge (SSE) platfor
 
 ZsecureWeb - Open-Source Hybrid SASE & Enterprise Browser Platform
 Copyright (C) 2026 ZsecureWeb Contributors
+
+//project structure
+1. ZsecureWeb (Meta / Orchestration Repo)
+   └── https://github.com/techpoctech/ZsecureWeb
+       ├── Contains: Build tools, setup scripts, docs, CI workflows, .gitmodules
+       └── Tracks: The exact committed states/hashes of the two submodules
+
+2. chromium (Forked Upstream Source)
+   └── https://github.com/techpoctech/chromium
+       ├── Lives at: thirdParty/chromium/src
+       └── Contains: Upstream Google Chromium code + minimal 1-line integration hooks
+
+3. zsecureweb-core (IP & Core Engine)
+   └── https://github.com/techpoctech/zsecureweb-core
+       ├── Lives at: thirdParty/chromium/src/zsecureweb
+       └── Contains: 100% of your proprietary C++ DLP, V8 hooks, custom UI, and BUILD.gn
