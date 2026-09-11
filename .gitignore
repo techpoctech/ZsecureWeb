@@ -1,0 +1,11 @@
+# Third-party dependencies
+thirdParty/chromium/
+tools/depot_tools/
+
+# Build outputs
+out/
+*.o
+*.obj
+
+# OS metadata
+.DS_Store
