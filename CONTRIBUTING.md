@@ -29,3 +29,5 @@ The CLA ensures that:
 4. To sign, reply directly to the PR comment with:
    ```text
    I have read the CLA Document and I hereby sign the CLA
+
+[ First PR Signed via CLA ] ──► [ Contributor ] ──► [ Committer (Write Access) ] ──► [ Core Reviewer / CODEOWNERS ]
