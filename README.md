@@ -89,3 +89,5 @@ Re-syncing Dependencies: If version.json is updated by other contributors, pull 
 
 python3 tools/automate.py
 Git Status Cleanliness: Untracked build outputs (out/, .o, .ninja) inside Chromium are automatically ignored by Git submodule configuration to keep git status clean.
+
+*"All product names, logos, and brands are property of their respective owners. All company, product, and service names used in this document are for identification purposes only. Use of these names, logos, and brands does not imply endorsement."
