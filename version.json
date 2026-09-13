@@ -1,13 +1,13 @@
 {
-  "chromium": {
-    "version_tag": "154.0.8037.17",
-    "upstream_url": "https://github.com/techpoctech/chromium.git"
-  },
   "depot_tools": {
-    "commit_hash": "62d2fcb41a84e4dcefd8c4da7dfa534e6c482854"
+    "hash": "main"
   },
-  "zsecureweb_core": {
-    "url": "https://github.com/techpoctech/zsecureweb-core.git",
-    "branch": "main"
+  "chromium": {
+    "version": "140.0.7100.100",
+    "upstream_url": "git@github.com:techpoctech/chromium.git",
+    "hash": "main"
+  },
+  "zsecure_core": {
+    "hash": "main"
   }
 }
