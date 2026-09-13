@@ -120,7 +120,7 @@ def run_ninja(target="chrome"):
 
 
 def main():
-    target = sys.argv[1] if len(sys.argv) > 1 else "chrome"
+    target = sys.argv[1] if len(sys.argv) > 1 else "content_shell"
     ensure_depot_tools_bootstrapped()
     run_gn_gen()
     run_ninja(target)
