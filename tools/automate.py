@@ -7,6 +7,7 @@ import os
 import subprocess
 import sys
 
+# Define workspace root directory
 ROOT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 VERSION_FILE = os.path.join(ROOT_DIR, "version.json")
 TOOLS_DIR = os.path.join(ROOT_DIR, "tools")
@@ -14,9 +15,14 @@ DEPOT_TOOLS_DIR = os.path.join(TOOLS_DIR, "depot_tools")
 THIRD_PARTY_DIR = os.path.join(ROOT_DIR, "thirdParty", "chromium")
 CHROMIUM_SRC = os.path.join(THIRD_PARTY_DIR, "src")
 
+
 def load_manifest():
+    if not os.path.exists(VERSION_FILE):
+        print(f"Error: Manifest file {VERSION_FILE} does not exist.")
+        sys.exit(1)
     with open(VERSION_FILE, "r") as f:
         return json.load(f)
+
 
 def get_env():
     """Builds a hermetic environment with local depot_tools locked."""
@@ -26,10 +32,11 @@ def get_env():
     env["DEPOT_TOOLS_WIN_TOOLCHAIN"] = "0"
     return env
 
-def sync_depot_tools(depot_tools_dir: str, target_hash: str):
-    print(f"=== Syncing depot_tools to Hash: {target_hash} ===")
 
-    # 1. Clone if depot_tools directory does not exist
+def sync_depot_tools(depot_tools_dir: str, target_hash: str):
+    """Clones and syncs depot_tools to a specific pinned hash or ref."""
+    print(f"=== Step 2: Syncing depot_tools to Hash/Branch: {target_hash} ===")
+
     if not os.path.exists(os.path.join(depot_tools_dir, ".git")):
         print(f"Cloning depot_tools into {depot_tools_dir}...")
         subprocess.run(
@@ -37,43 +44,27 @@ def sync_depot_tools(depot_tools_dir: str, target_hash: str):
             check=True
         )
 
-    # 2. Fetch origin to ensure the specified hash is available locally
     print("Fetching latest refs for depot_tools...")
-    subprocess.run(
-        ["git", "fetch", "origin"],
-        cwd=depot_tools_dir,
-        check=True
-    )
+    subprocess.run(["git", "fetch", "origin"], cwd=depot_tools_dir, check=True)
+    subprocess.run(["git", "fetch", "origin", target_hash], cwd=depot_tools_dir, check=False)
+    subprocess.run(["git", "checkout", "-f", target_hash], cwd=depot_tools_dir, check=True)
 
-    # 3. Explicitly fetch the target commit (handles shallow clone edge cases)
-    subprocess.run(
-        ["git", "fetch", "origin", target_hash],
-        cwd=depot_tools_dir,
-        check=False  # Ignore error if origin doesn't support fetching hashes directly
-    )
+    print("✓ depot_tools successfully synced.\n")
 
-    # 4. Checkout target hash and force clean state
-    subprocess.run(
-        ["git", "checkout", "-f", target_hash],
-        cwd=depot_tools_dir,
-        check=True
-    )
-
-    print("✓ depot_tools successfully synced.")
 
 def generate_gclient_config(manifest):
-    """Generates explicit .gclient file pointing directly to techpoctech SSH repository."""
+    """Generates .gclient config with managed: False to respect Git submodule state."""
     os.makedirs(THIRD_PARTY_DIR, exist_ok=True)
     gclient_path = os.path.join(THIRD_PARTY_DIR, ".gclient")
 
-    fork_url = manifest["chromium"]["upstream_url"]
+    fork_url = manifest.get("chromium", {}).get("upstream_url", "https://github.com/techpoctech/chromium.git")
 
     gclient_content = f"""solutions = [
   {{
     "name": "src",
     "url": "{fork_url}",
     "deps_file": "DEPS",
-    "managed": True,
+    "managed": False,
     "custom_deps": {{}},
   }},
 ]
@@ -82,32 +73,12 @@ def generate_gclient_config(manifest):
         f.write(gclient_content)
     print(f"✓ Generated .gclient pointing to {fork_url}")
 
-def sync_chromium(manifest):
-    """Runs deterministic gclient sync pointing to techpoctech fork."""
+
+def sync_chromium_deps():
+    """Syncs third-party dependencies and runs toolchain hooks."""
     env = get_env()
-    generate_gclient_config(manifest)
 
-    fork_url = manifest["chromium"]["upstream_url"]
-
-    # 1. If src exists, ensure local git remote matches version.json URL
-    if os.path.exists(os.path.join(CHROMIUM_SRC, ".git")):
-        print(f"=== Aligning local origin remote to {fork_url} ===")
-        subprocess.run(
-            ["git", "remote", "set-url", "origin", fork_url],
-            cwd=CHROMIUM_SRC,
-            check=True
-        )
-    else:
-        # 2. Clone fresh target branch if src doesn't exist
-        target_branch = manifest["chromium"].get("hash", "main")
-        print(f"=== Initializing src from {fork_url} ===")
-        os.makedirs(CHROMIUM_SRC, exist_ok=True)
-        subprocess.run(
-            ["git", "clone", "--depth", "1", "-b", target_branch, fork_url, CHROMIUM_SRC],
-            check=True
-        )
-
-    print("=== Running Hermetic gclient sync ===")
+    print("=== Step 3: Running Hermetic gclient sync ===")
     subprocess.run(
         ["gclient", "sync", "--no-history", "--nohooks"],
         cwd=THIRD_PARTY_DIR,
@@ -115,21 +86,63 @@ def sync_chromium(manifest):
         check=True
     )
 
-    print("=== Running gclient runhooks ===")
+    print("=== Step 4: Running gclient runhooks ===")
     subprocess.run(["gclient", "runhooks"], cwd=THIRD_PARTY_DIR, env=env, check=True)
+
+
+def sync_submodules(root_dir=ROOT_DIR):
+    """Robustly provisions zsecureweb submodules via direct safe cloning to avoid pathspec errors."""
+    print("=== Step 1: Syncing zsecureweb Submodules ===")
+
+    chromium_path = os.path.join(root_dir, "thirdParty", "chromium", "src")
+    zsecure_path = os.path.join(chromium_path, "zsecureweb")
+
+    # 1. Handle Chromium fork
+    if not os.path.exists(os.path.join(chromium_path, ".git")):
+        print("Cloning Chromium fork...")
+        os.makedirs(os.path.dirname(chromium_path), exist_ok=True)
+        subprocess.run(
+            ["git", "clone", "https://github.com/techpoctech/chromium.git", chromium_path],
+            check=True
+        )
+    else:
+        print("Chromium fork already present.")
+
+    # 2. Neutralize Chromium's internal .gitmodules to prevent chrome-internal prompts
+    chromium_gitmodules = os.path.join(chromium_path, ".gitmodules")
+    if os.path.exists(chromium_gitmodules):
+        print("Neutralizing Chromium's internal .gitmodules...")
+        os.remove(chromium_gitmodules)
+
+    # 3. Handle zsecureweb-core engine
+    if not os.path.exists(os.path.join(zsecure_path, ".git")):
+        print("Cloning zsecureweb-core engine...")
+        os.makedirs(os.path.dirname(zsecure_path), exist_ok=True)
+        subprocess.run(
+            ["git", "clone", "https://github.com/techpoctech/zsecureweb-core.git", zsecure_path],
+            check=True
+        )
+    else:
+        print("zsecureweb-core engine already present.")
+
+    print("✓ All zsecureweb submodules successfully synchronized.\n")
+
 
 def main():
     manifest = load_manifest()
 
-    # Extract depot_tools target hash from version.json
-    depot_tools_hash = manifest.get("depot_tools", {}).get("hash") or manifest.get("depot_tools_hash")
-    if not depot_tools_hash:
-        print("Error: Could not locate depot_tools hash key in version.json")
-        sys.exit(1)
+    depot_tools_hash = (
+        manifest.get("depot_tools", {}).get("hash")
+        if isinstance(manifest.get("depot_tools"), dict)
+        else manifest.get("depot_tools_hash") or "main"
+    )
 
+    sync_submodules(ROOT_DIR)
     sync_depot_tools(DEPOT_TOOLS_DIR, depot_tools_hash)
-    sync_chromium(manifest)
-    print("\n[zsecureweb] Workspace successfully synchronized!")
+    generate_gclient_config(manifest)
+    sync_chromium_deps()
+    print("\n[zsecureweb] Submodules and workspace successfully synchronized!")
+
 
 if __name__ == "__main__":
     main()
