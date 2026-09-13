@@ -1,5 +1,4 @@
 # Third-party dependencies
-thirdParty/chromium/
 tools/depot_tools/
 
 # Build outputs

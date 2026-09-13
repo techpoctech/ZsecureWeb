@@ -91,42 +91,28 @@ def sync_chromium_deps():
 
 
 def sync_submodules(root_dir=ROOT_DIR):
-    """Robustly provisions zsecureweb submodules via direct safe cloning to avoid pathspec errors."""
-    print("=== Step 1: Syncing zsecureweb Submodules ===")
+    """Initializes and synchronizes Chromium and zsecureweb-core submodules."""
+    print("=== Step: Syncing Git Submodules ===")
 
-    chromium_path = os.path.join(root_dir, "thirdParty", "chromium", "src")
-    zsecure_path = os.path.join(chromium_path, "zsecureweb")
-
-    # 1. Handle Chromium fork
-    if not os.path.exists(os.path.join(chromium_path, ".git")):
-        print("Cloning Chromium fork...")
-        os.makedirs(os.path.dirname(chromium_path), exist_ok=True)
-        subprocess.run(
-            ["git", "clone", "https://github.com/techpoctech/chromium.git", chromium_path],
-            check=True
-        )
-    else:
-        print("Chromium fork already present.")
-
-    # 2. Neutralize Chromium's internal .gitmodules to prevent chrome-internal prompts
-    chromium_gitmodules = os.path.join(chromium_path, ".gitmodules")
+    # Neutralize any nested internal gitmodules in chromium if present
+    chromium_gitmodules = os.path.join(root_dir, "thirdParty", "chromium", "src", ".gitmodules")
     if os.path.exists(chromium_gitmodules):
-        print("Neutralizing Chromium's internal .gitmodules...")
         os.remove(chromium_gitmodules)
 
-    # 3. Handle zsecureweb-core engine
-    if not os.path.exists(os.path.join(zsecure_path, ".git")):
-        print("Cloning zsecureweb-core engine...")
-        os.makedirs(os.path.dirname(zsecure_path), exist_ok=True)
-        subprocess.run(
-            ["git", "clone", "https://github.com/techpoctech/zsecureweb-core.git", zsecure_path],
-            check=True
-        )
-    else:
-        print("zsecureweb-core engine already present.")
+    # Sync submodule URLs and configuration first to prevent pathspec errors
+    subprocess.run(
+        ["git", "submodule", "sync"],
+        cwd=root_dir,
+        check=True
+    )
 
-    print("✓ All zsecureweb submodules successfully synchronized.\n")
-
+    # Initialize and update submodules recursively
+    subprocess.run(
+        ["git", "submodule", "update", "--init", "--recursive"],
+        cwd=root_dir,
+        check=True
+    )
+    print("✓ All submodules successfully synchronized.\n")
 
 def main():
     manifest = load_manifest()
@@ -140,7 +126,7 @@ def main():
     sync_submodules(ROOT_DIR)
     sync_depot_tools(DEPOT_TOOLS_DIR, depot_tools_hash)
     generate_gclient_config(manifest)
-    sync_chromium_deps()
+    #sync_chromium_deps()
     print("\n[zsecureweb] Submodules and workspace successfully synchronized!")
 
 
