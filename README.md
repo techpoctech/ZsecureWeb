@@ -87,7 +87,19 @@ zsecureweb/
 🧹 Maintenance & Updating
 Re-syncing Dependencies: If version.json is updated by other contributors, pull the changes and re-run:
 
+Quick Start
+
+1. Clone and Set Up
+
+Bash
+git clone https://github.com/techpoctech/zsecureweb.git
+cd zsecureweb
 python3 tools/automate.py
-Git Status Cleanliness: Untracked build outputs (out/, .o, .ninja) inside Chromium are automatically ignored by Git submodule configuration to keep git status clean.
+(This automatically configures gclient, pulls Chromium, and clones zsecureweb-core into thirdParty/chromium/src/zsecureweb.)
+
+2. Build the Project
+
+Bash
+python3 tools/build.py
 
 *"All product names, logos, and brands are property of their respective owners. All company, product, and service names used in this document are for identification purposes only. Use of these names, logos, and brands does not imply endorsement."

@@ -65,7 +65,9 @@ def generate_gclient_config(manifest):
     "url": "{fork_url}",
     "deps_file": "DEPS",
     "managed": False,
-    "custom_deps": {{}},
+    "custom_deps": {{
+      "src/zsecureweb": "https://github.com/techpoctech/zsecureweb-core.git@main",
+    }},
   }},
 ]
 """
@@ -90,29 +92,11 @@ def sync_chromium_deps():
     subprocess.run(["gclient", "runhooks"], cwd=THIRD_PARTY_DIR, env=env, check=True)
 
 
-def sync_submodules(root_dir=ROOT_DIR):
-    """Initializes and synchronizes Chromium and zsecureweb-core submodules."""
-    print("=== Step: Syncing Git Submodules ===")
-
-    # Neutralize any nested internal gitmodules in chromium if present
-    chromium_gitmodules = os.path.join(root_dir, "thirdParty", "chromium", "src", ".gitmodules")
-    if os.path.exists(chromium_gitmodules):
-        os.remove(chromium_gitmodules)
-
-    # Sync submodule URLs and configuration first to prevent pathspec errors
-    subprocess.run(
-        ["git", "submodule", "sync"],
-        cwd=root_dir,
-        check=True
-    )
-
-    # Initialize and update submodules recursively
-    subprocess.run(
-        ["git", "submodule", "update", "--init", "--recursive"],
-        cwd=root_dir,
-        check=True
-    )
-    print("✓ All submodules successfully synchronized.\n")
+def sync_submodules(root_dir):
+    print("=== Automating Submodule Initialization ===")
+    # Ensure submodules are registered and pulled recursively
+    subprocess.run(["git", "submodule", "update", "--init", "--recursive"], cwd=root_dir, check=True)
+    print("✓ Submodules initialized successfully.\n")
 
 def main():
     manifest = load_manifest()
@@ -123,10 +107,10 @@ def main():
         else manifest.get("depot_tools_hash") or "main"
     )
 
-    sync_submodules(ROOT_DIR)
     sync_depot_tools(DEPOT_TOOLS_DIR, depot_tools_hash)
     generate_gclient_config(manifest)
-    #sync_chromium_deps()
+    sync_chromium_deps()
+    #sync_submodules(ROOT_DIR)
     print("\n[zsecureweb] Submodules and workspace successfully synchronized!")
 
 

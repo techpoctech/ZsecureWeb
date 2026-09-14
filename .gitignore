@@ -1,5 +1,9 @@
 # Third-party dependencies
 tools/depot_tools/
+# Chromium and gclient workspaces
+thirdParty/chromium/
+thirdParty/.gclient
+thirdParty/.gclient_entries
 
 # Build outputs
 out/
